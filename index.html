@@ -229,7 +229,7 @@
       var NEW_DAY_SHIFTS = new Set();
       var DATA = null;
       var AMIONKEY = new RegExp("amion=([^&]*)", "i").exec(window.location.search);
-      AMIONKEY = AMIONKEY && unescape(AMIONKEY[1]).toLowerCase() || "";
+      AMIONKEY = AMIONKEY && unescape(AMIONKEY[1]).trim().toLowerCase() || "";
       
       // ----------------------------------------------------------------------
       // Data functions
@@ -402,7 +402,7 @@
 
       function handleLogin(e) {
         if(e.keyCode==13) {
-          AMIONKEY = $('#amionkey').val();
+          AMIONKEY = $('#amionkey').val().trim().toLowerCase();
           const url = window.location.href.split('?')[0] + '?amion=' + AMIONKEY;
           window.history && window.history.pushState && window.history.pushState("", "", url);
           $('.login').hide();
