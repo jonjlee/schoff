@@ -225,7 +225,7 @@
       var NEW_DAY_SHIFTS = new Set();
       var DATA = null;
       var AMIONKEY = new RegExp("amion=([^&]*)", "i").exec(window.location.search);
-      AMIONKEY = AMIONKEY && unescape([1]) || "";
+      AMIONKEY = AMIONKEY && unescape(AMIONKEY[1]) || "";
       
       // ----------------------------------------------------------------------
       // Data functions
