@@ -314,6 +314,7 @@
         let [name, , , shift, , , date, start, end, ryear] = ln;
         date = moment(date, 'M-D-YY');
         name = name.replace(/(.)(?:.*?), ?(.*)/, '$2 $1') + `, ${ryear}`; // Doe, John -> John D
+        shift = shift || ln[14];                                          // For shifts missing names, use secondary designation
         shift = shift.replace(/^(?:R1 )?(.+?)(\*|-e|-c)?$/, '$1');        // pulm-e -> pulm
         
         // Determine shift type (e.g. 'Med 4 Day' -> 'day'). Shifts that don't match any entry in the map default to a day shift
@@ -576,7 +577,7 @@
         fetchJson(load);
 
         // Comment out fetchJson and uncomment this line to directly use year.csv rather than data-encrypted.txt
-        //fetchCsv(load);
+        fetchCsv(load);
         
         saveData();
       };
