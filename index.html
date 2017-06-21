@@ -412,7 +412,7 @@
           refreshFilters();
         });
         $('#show-matching').on('input', refreshFilters);
-        $('#amionkey').keypress((e) => (e.keyCode==13) && doLogin());
+        $('#amionkey').keypress((e) => !(e.keyCode==13) || doLogin());
         $('#login').click(doLogin);
         
         // Month labs
