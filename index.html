@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Who's Free?</title>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/picnicss/6.3.2/picnic.min.css">
     <style>
@@ -231,7 +232,7 @@
       </section>
       <section id="cal" class="flex one seven-600 cal">
         <div class="full loading"><div class="spinner"></div></div>
-        <div class="full login" style="display:none">Amion Login: <input id="amionkey" type="text"/></div>
+        <div class="full login" style="display:none">Amion Login: <input id="amionkey" type="text"/> <button id="login">Go</button></div>
       </section>
       <section class="flex"></section>
     </main>
@@ -246,7 +247,7 @@
       var NEW_DAY_SHIFTS = new Set();
       var DATA = null;
       var AMIONKEY = new RegExp("amion=([^&]*)", "i").exec(window.location.search);
-      AMIONKEY = AMIONKEY && unescape(AMIONKEY[1]) || "";
+      AMIONKEY = AMIONKEY && unescape(AMIONKEY[1]).trim().toLowerCase() || "";
       
       // ----------------------------------------------------------------------
       // Data functions
@@ -411,7 +412,8 @@
           refreshFilters();
         });
         $('#show-matching').on('input', refreshFilters);
-        $('#amionkey').keypress(handleLogin);
+        $('#amionkey').keypress((e) => (e.keyCode==13) && doLogin());
+        $('#login').click(doLogin);
         
         // Month labs
         const month = moment().date(1);
@@ -422,15 +424,13 @@
         $('.months').show();
       }
 
-      function handleLogin(e) {
-        if(e.keyCode==13) {
-          AMIONKEY = $('#amionkey').val();
-          const url = window.location.href.split('?')[0] + '?amion=' + AMIONKEY;
-          window.history && window.history.pushState && window.history.pushState("", "", url);
-          $('.login').hide();
-          $('.loading').show();
-          setTimeout(reload, 0);
-        }
+      function doLogin(e) {
+        AMIONKEY = $('#amionkey').val().trim().toLowerCase();
+        const url = window.location.href.split('?')[0] + '?amion=' + AMIONKEY;
+        window.history && window.history.pushState && window.history.pushState("", "", url);
+        $('.login').hide();
+        $('.loading').show();
+        setTimeout(reload, 0);
       }
 
       function refreshCalendar(data) {
