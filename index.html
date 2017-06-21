@@ -2,17 +2,13 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Are You Off?</title>
+    <title>Who's Free?</title>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/picnicss/6.3.2/picnic.min.css">
     <style>
       /* For small screens, hide weekday header and display calendar in single column like an agenda */
       @media (max-width: 600px) { 
         .section-label {
           display: none !important;
-        }
-        #show-matching {
-          width: 90%;
         }
         .cal .header {
           display: none !important; 
@@ -51,6 +47,18 @@
         }
       }      
       
+      /* nav bar */
+      nav {
+        padding: 2em 0;
+      }
+      nav .menu {
+        font-size: 11pt; 
+      }
+      nav input[type="text"] {
+        padding: 0 5px;
+        height: 1.75em;
+      }
+
       /* Main body */
       .main section {
         text-align: left;
@@ -102,7 +110,7 @@
         font-weight: bold;
         text-align: center;
         vertical-align: middle;
-        background: #2ECC40;
+        background: #6FD7A0;
         border: 1px solid #ccc;
         padding: 5px 0px 5px 0px;
       }
@@ -136,18 +144,21 @@
       .resource {
         color: #d35400;
       }
+      .work {
+        color: #aaaaaa;
+      }
     </style>
   </head>
   <body>
     <nav>
-      <a href="#" class="brand">
-        <span>Are You Off?</span>
-      </a>
-    </nav>
-    <main class="main">
-      <section class="flex five">
-        <div class="full fifth-600 section-label">Who:</div>
-        <div class="full four-fifth-600">
+      <a href="#" class="brand">Who's Free?</a>
+      <!-- responsive-->
+      <input id="bmenug" type="checkbox" class="show">
+      <label for="bmenug" class="burger pseudo button">&#8801;</label>
+
+      <div class="menu">
+        <div>
+          <span>Show: </span>
           <label>
             <input id="show-r1" class="filter" type="checkbox" checked>
             <span class="checkable">R1</span>
@@ -158,15 +169,15 @@
           </label>
           <label>
             <input id="show-r3" class="filter" type="checkbox" checked>
-            <span class="checkable">R3</span>
+            <span class="checkable">R3, </span>
           </label>
           <label>
-            <span class="checkable">and matching: </span>
-            <input id="show-matching" class="filter" type="text" size="40" placeholder="use commas for multiple names">
+            <span class="checkable">matching: </span>
+            <input id="show-matching" class="filter" type="text" size="25" placeholder="use commas for multiple names">
           </label>
         </div>
-        <div class="full fifth-600 section-label">On:</div>
-        <div class="full four-fifth-600">
+        <div>
+          <span>On: </span>
           <label>
             <input id="show-vacation" class="filter" type="checkbox" checked>
             <span class="checkable checked vaca">Vacation</span>
@@ -191,8 +202,14 @@
             <input id="show-resource" class="filter" type="checkbox">
             <span class="checkable resource">Resource</span>
           </label>
+          <label>
+            <input id="show-working" class="filter" type="checkbox">
+            <span class="checkable work">Working</span>
+          </label>
         </div>
-      </section>
+      </div>
+    </nav>
+    <main class="main">
       <section class="flex">
         <div class="tabs twelve months" style="display:none">
           <input id="month-0" type="radio", name="month-tabgroup" checked /><label class="pseudo button toggle" for="month-0"></label>
@@ -214,7 +231,7 @@
       </section>
       <section id="cal" class="flex one seven-600 cal">
         <div class="full loading"><div class="spinner"></div></div>
-        <div class="full login" style="display:none">Amion Login: <input id="amionkey" type="text"/> <button id="login">Go</button></div>
+        <div class="full login" style="display:none">Amion Login: <input id="amionkey" type="text"/></div>
       </section>
       <section class="flex"></section>
     </main>
@@ -229,7 +246,7 @@
       var NEW_DAY_SHIFTS = new Set();
       var DATA = null;
       var AMIONKEY = new RegExp("amion=([^&]*)", "i").exec(window.location.search);
-      AMIONKEY = AMIONKEY && unescape(AMIONKEY[1]).trim().toLowerCase() || "";
+      AMIONKEY = AMIONKEY && unescape(AMIONKEY[1]) || "";
       
       // ----------------------------------------------------------------------
       // Data functions
@@ -245,7 +262,7 @@
         //
         let data = csvToObject(lns);
         appendPostCall(data);
-        deleteWorkingShifts(data);
+        labelWorkingShifts(data);
         return data;
       }
       
@@ -365,14 +382,19 @@
         }
       }
       
-      function deleteWorkingShifts(data) {
+      function labelWorkingShifts(data) {
         // Delete all non-"free" shifts
         for (let date in data) {
           const dataForDate = data[date];
           for (let name in dataForDate) {
             // Not free if working a day shift or working a night shift, unless we are pre-call
             if (dataForDate[name].t.match(/day|away/) || (dataForDate[name].t.match(/night/) && !dataForDate[name].t.match(/precall/))) {
-              delete dataForDate[name];
+              if (dataForDate[name].t.match(/day/) && dataForDate[name].t.match(/night/)) {
+                dataForDate[name].s = dataForDate[name].s.replace(/ Day| Night/i, ' 24hr')
+              } else {
+                dataForDate[name].s = dataForDate[name].s.replace(/ Day| Night|, am|, pm/i, '')
+              }
+              dataForDate[name].t = 'work';
             }
           }
         }
@@ -389,8 +411,7 @@
           refreshFilters();
         });
         $('#show-matching').on('input', refreshFilters);
-        $('#amionkey').keypress((e) => !(e.keyCode==13) || doLogin());
-        $('#login').click(doLogin);
+        $('#amionkey').keypress(handleLogin);
         
         // Month labs
         const month = moment().date(1);
@@ -401,13 +422,15 @@
         $('.months').show();
       }
 
-      function doLogin() {
-        AMIONKEY = $('#amionkey').val().trim().toLowerCase();
-        const url = window.location.href.split('?')[0] + '?amion=' + AMIONKEY;
-        window.history && window.history.pushState && window.history.pushState("", "", url);
-        $('.login').hide();
-        $('.loading').show();
-        setTimeout(reload, 0);
+      function handleLogin(e) {
+        if(e.keyCode==13) {
+          AMIONKEY = $('#amionkey').val();
+          const url = window.location.href.split('?')[0] + '?amion=' + AMIONKEY;
+          window.history && window.history.pushState && window.history.pushState("", "", url);
+          $('.login').hide();
+          $('.loading').show();
+          setTimeout(reload, 0);
+        }
       }
 
       function refreshCalendar(data) {
@@ -483,6 +506,7 @@
               jeo = $('#show-jeopardy').is(':checked'), 
               call = $('#show-call').is(':checked'), 
               res = $('#show-resource').is(':checked'),
+              work = $('#show-working').is(':checked'),
               patterns = $('#show-matching').val()
                           .split(',')
                           .map(v => v.trim())
@@ -501,6 +525,7 @@
                         !jeo && $el.hasClass('jeo') ||
                         !call && ($el.hasClass('precall') || $el.hasClass('postcall')) ||
                         !res && $el.hasClass('resource') ||
+                        !work && ($el.hasClass('work')) || 
                         (patterns.length > 0) && patterns.every((p) => (p && !text.match(p))));
           return hideEl;
         });
@@ -510,29 +535,27 @@
       // ----------------------------------------------------------------------
       // Utility functions
       // ----------------------------------------------------------------------
-      (function(console){
-      console.save = function(data, filename){
-        if(!data) {
-          console.error('Console.save: No data')
+      function saveData(data) {
+        if (data === undefined) {
+          console.log('To refresh data, save the following URL to "year.csv", then run fetchCsv(saveData) (and wait...)');
+          console.log(""+`https://www.amion.com/cgi-bin/ocs?Lo=${escape(AMIONKEY)}&Rpt=625c&Month=${moment().month()+1}&Days=365`);
           return;
+        } else if (typeof data !== "object") {
+          console.log('Invalid data.');
         }
-
-        if(!filename) filename = 'console.json'
-
-        if(typeof data === "object"){
-          data = CryptoJS.AES.encrypt(JSON.stringify(data), AMIONKEY);
-        }
+        
+        data = CryptoJS.AES.encrypt(JSON.stringify(data), AMIONKEY);
 
         const blob = new Blob([data], {type: 'binary'}),
             e = document.createEvent('MouseEvents'),
             a = document.createElement('a');
 
-        a.download = filename;
+        a.download = 'data-encrypted.txt';
         a.href = window.URL.createObjectURL(blob);
         a.dataset.downloadurl =  ['binary', a.download, a.href].join(':');
         e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
         a.dispatchEvent(e);
-      }})(console);
+      }
       
       // ----------------------------------------------------------------------
       // Initizialization
@@ -545,8 +568,12 @@
           $('#loading').hide();
         };
 
-        //fetchCsv(load);
         fetchJson(load);
+
+        // Comment out fetchJson and uncomment this line to directly use year.csv rather than data-encrypted.txt
+        //fetchCsv(load);
+        
+        saveData();
       };
       
       function showLogin() {
