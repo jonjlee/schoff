@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Who's Free?</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/picnicss/6.3.2/picnic.min.css">
+    <style>
+      /* For small screens, hide weekday header and display calendar in single column like an agenda */
+      @media (max-width: 600px) { 
+        .section-label {
+          display: none !important;
+        }
+        .cal .header {
+          display: none !important; 
+        }       
+        .cal > div:empty
+        {
+          display:none;
+        }
+      }
+
+      /* Spinner */
+      .spinner {
+        width: 40px; height: 40px;
+        margin: 10px auto;
+        background-color: #333;
+
+        border-radius: 100%;  
+        -webkit-animation: sk-scaleout 1.0s infinite ease-in-out;
+        animation: sk-scaleout 1.0s infinite ease-in-out;
+      }
+      @-webkit-keyframes sk-scaleout {
+        0% { -webkit-transform: scale(0) }
+        100% {
+          -webkit-transform: scale(1.0);
+          opacity: 0;
+        }
+      }
+      @keyframes sk-scaleout {
+        0% { 
+          -webkit-transform: scale(0);
+          transform: scale(0);
+        } 100% {
+          -webkit-transform: scale(1.0);
+          transform: scale(1.0);
+          opacity: 0;
+        }
+      }      
+      
+      /* nav bar */
+      nav {
+        padding: 2em 0;
+      }
+      nav .menu {
+        font-size: 11pt; 
+      }
+      nav input[type="text"] {
+        padding: 0 5px;
+        height: 1.75em;
+      }
+
+      /* Main body */
+      .main section {
+        text-align: left;
+        width: 90%;
+        max-width: 1024px;
+        padding: 25px 0 0;
+        margin: 0 auto;
+      }
+      /* extra space at top of page for nav bar */
+      .main section:first-child {
+        padding: 80px 0 0;
+      }
+      input {
+        width: auto;
+      }
+      
+      /* Labels for checkboxes */
+      .section-label {
+        text-align: right;
+        vertical-align: middle;
+      }
+      
+      /* Month buttons */
+      .months {
+        text-align: center;
+      }
+      
+      /* Calendar */
+      .main .cal {
+        padding-top: 0px;
+      }
+      /* Loading... text */
+      .cal > .loading, .cal > .login {
+        font-size: 10pt;
+        text-align: center;
+        padding-top: 25px;
+        border: 0px;
+      }
+      /* Individual box on calendar */
+      .cal > div {
+        font-size: 8pt;
+        text-align: left;
+        border: 1px solid #ccc;
+        padding: 2px;
+      }
+      /* Header with weekdays */
+      .cal .header {
+        font-size: 10pt;
+        font-weight: bold;
+        text-align: center;
+        vertical-align: middle;
+        background: #6FD7A0;
+        border: 1px solid #ccc;
+        padding: 5px 0px 5px 0px;
+      }
+      /* Span containing date (e.g. "Jan 1") */
+      .cal .date {
+        display: inline-block;
+        text-align: right;
+        width: 100%;
+      }
+      
+      /* Colors for each type of shift */
+      .cal .shift {
+        font-size: 6pt;
+        color: #888888;
+      }
+      .vaca {
+        color: #3455db;
+      }
+      .off {
+        color: #222222; //#005500;
+      }
+      .elective {
+        color: #7928a1;
+      }
+      .jeo {
+        color: #005500;
+      }
+      .precall, .postcall {
+        color: #856514;
+      }
+      .resource {
+        color: #d35400;
+      }
+      .work {
+        color: #aaaaaa;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="#" class="brand">Who's Free?</a>
+      <!-- responsive-->
+      <input id="bmenug" type="checkbox" class="show">
+      <label for="bmenug" class="burger pseudo button">&#8801;</label>
+
+      <div class="menu">
+        <div>
+          <span>Show: </span>
+          <label>
+            <input id="show-r1" class="filter" type="checkbox" checked>
+            <span class="checkable">R1</span>
+          </label>
+          <label>
+            <input id="show-r2" class="filter" type="checkbox" checked>
+            <span class="checkable">R2</span>
+          </label>
+          <label>
+            <input id="show-r3" class="filter" type="checkbox" checked>
+            <span class="checkable">R3, </span>
+          </label>
+          <label>
+            <span class="checkable">matching: </span>
+            <input id="show-matching" class="filter" type="text" size="25" placeholder="use commas for multiple names">
+          </label>
+        </div>
+        <div>
+          <span>On: </span>
+          <label>
+            <input id="show-vacation" class="filter" type="checkbox" checked>
+            <span class="checkable checked vaca">Vacation</span>
+          </label>
+          <label>
+            <input id="show-off" class="filter" type="checkbox" checked>
+            <span class="checkable off">Days off / weekends</span>
+          </label>
+          <label>
+            <input id="show-elective" class="filter" type="checkbox">
+            <span class="checkable elective">Elective</span>
+          </label>
+          <label>
+            <input id="show-jeopardy" class="filter" type="checkbox">
+            <span class="checkable jeo">Jeopardy</span>
+          </label>
+          <label>
+            <input id="show-call" class="filter" type="checkbox">
+            <span class="checkable postcall">Pre/post-call</span>
+          </label>
+          <label>
+            <input id="show-resource" class="filter" type="checkbox">
+            <span class="checkable resource">Resource</span>
+          </label>
+          <label>
+            <input id="show-working" class="filter" type="checkbox">
+            <span class="checkable work">Working</span>
+          </label>
+        </div>
+      </div>
+    </nav>
+    <main class="main">
+      <section class="flex">
+        <div class="tabs twelve months" style="display:none">
+          <input id="month-0" type="radio", name="month-tabgroup" checked /><label class="pseudo button toggle" for="month-0"></label>
+          <input id="month-1" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-1"></label>
+          <input id="month-2" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-2"></label>
+          <input id="month-3" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-3"></label>
+          <input id="month-4" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-4"></label>
+          <input id="month-5" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-5"></label>
+          <input id="month-6" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-6"></label>
+          <input id="month-7" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-7"></label>
+          <input id="month-8" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-8"></label>
+          <input id="month-9" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-9"></label>
+          <input id="month-10" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-10"></label>
+          <input id="month-11" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-11"></label>
+        </div>
+      </section>
+      <section class="flex seven cal header">
+        <div class="header">Sun</div><div class="header">Mon</div><div class="header">Tue</div><div class="header">Wed</div><div class="header">Thu</div><div class="header">Fri</div><div class="header">Sat</div>
+      </section>
+      <section id="cal" class="flex one seven-600 cal">
+        <div class="full loading"><div class="spinner"></div></div>
+        <div class="full login" style="display:none">Amion Login: <input id="amionkey" type="text"/> <button id="login">Go</button></div>
+      </section>
+      <section class="flex"></section>
+    </main>
+    
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.8.3/jquery.csv.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+    <script type="text/babel">
+      var KNOWN_DAY_SHIFTS = new Set(["ED Mid 12P-12A", "ED Mid 12P-10P", "ED Mid 5P-2A Team West", 'HMC ED+Wards 7A-6P', "HEM SR Orange 1", "HEM SR Orange 2", "HEM SR Blue 1", 'IICU Day', 'Med 1 Day', 'Med 1 Night', 'Med 2 Day', 'Med 2 Night', 'Med 3 Day', 'Med 3 Night', 'Med 4 Day', 'Med 4 Night', 'Med 5 Day', 'Med 5 Night', 'Med 6 Day', 'Med 6 Night', 'Med 7 Day', 'Med 7 Night', 'NICU Day', 'NICU R1 Day', 'PICU Green Day', 'PICU Yellow Day', "Shift A: 7 AM - 6 PM", "Shfit B: 7 AM - 6 PM", "Shift C: 9 AM - 7 PM", "Shift D: 12 PM - 10 PM", "Shift E: 1 PM - 11 PM"]);
+      var NEW_DAY_SHIFTS = new Set();
+      var DATA = null;
+      var AMIONKEY = new RegExp("amion=([^&]*)", "i").exec(window.location.search);
+      AMIONKEY = AMIONKEY && unescape(AMIONKEY[1]).trim().toLowerCase() || "";
+      
+      // ----------------------------------------------------------------------
+      // Data functions
+      // ----------------------------------------------------------------------
+      function parseSrcData(csv) {
+        // Parse and skip first 8 header lines
+        let lns = $.csv.toArrays(csv);
+        lns = lns.splice(8);
+        
+        // Convert CSV to a data object {date -> {name -> {shift data}}}, eg:
+        //
+        //  {'2017-01-01': {'John': {r: 'R1', s: 'Med 4', t: 'day,night'}, }, }
+        //
+        let data = csvToObject(lns);
+        appendPostCall(data);
+        labelWorkingShifts(data);
+        return data;
+      }
+      
+      // Convert each line from csv file (one shift) to a data object with format {'2017-01-01': {'John': {r: 'R1', s: 'Med 4', t: 'day,night'}, }, }.
+      // This function does not consider relationships between multiple lines of data, such as tagging days as pre/post call
+      function csvToObject(lns) {
+        let data = {};
+        for (let ln of lns) {
+          const [name, date, info] = transformFields(ln);
+          if (name) {
+            const dateStr = date.format('YYYY-MM-DD');
+            const dataForDate = data[dateStr] || {};
+            
+            // Combine this shift's info with any previous data for this same person
+            dataForDate[name] = combine(info, dataForDate[name]);
+            data[dateStr] = dataForDate;
+          }
+        }
+        return data
+      }
+      
+      // Convert a single line from csv file to a name, data, and shift
+      function transformFields(ln) {
+        const namesToIgnore = /--|Baker, Barb|MCC Attending|MCC Nurse Practitioner|Hem-Onc Hospitalist|HEM SR|EM3 PICU|Madigan PICU|Nurse Practitioner/,
+              rYearsToIgnore = /Chief|Heme-Onc Hospitalist|Visitor|Madigan Pediatrics|Other|WV/,
+              shiftTypes = [
+                ['away', /^(?:W |Alaska|Away|REACH-Kisii)/],
+                ['elective', /^(?:ACR|Adol|allergy|bioethics|cards|cardiology|child.abuse|child.psych|clinics|cranio(?:facial)?|Dev|derm(?:atology)?|endo|genetics|gi|heme|id|innovation.*|MCC|neph|neuro|ophth(?:almology)?|PATHWAY|palliative(?:.care)?|pulm|radio(:?logy)?|rheum|reading|research|Res Path|sleep med|sports-ortho|wild-sports)$/i],
+                ['jeo', /^Jeo(?:pardy)?/],
+                ['night', /Night$/],
+                ['night', /6P-7A|7P-7A|- 3 AM|- 4 AM|- 7 AM/],
+                ['off', /^(?:R1 )?Med [1-7]$/],                         // shifts listed as rotation name only are off. Working shifts are named.
+                ['off', /(:?cicu|ED|HEM R1|HEM SR|HEM SR Blue|HEM SR Blue 2|HEM SR Orange|HEM SR Orange 2|HMC|Med 7 Teaching Off|NB|NB\+|Newborn Senior|NICU|NICU R1|PICU|Resource Off|IICU)$/i],  // -
+                ['resource', /Resource$/],
+                ['vaca', /Vacation|VAC/]];
+
+        // Skip data for non-residents
+        if (ln[0].match(namesToIgnore) || ln[9].match(rYearsToIgnore)) {
+          return [null, null, null];
+        }
+        
+        // Reformat field text
+        let [name, , , shift, , , date, start, end, ryear] = ln;
+        date = moment(date, 'M-D-YY');
+        name = name.replace(/(.)(?:.*?), ?(.*)/, '$2 $1') + `, ${ryear}`; // Doe, John -> John D
+        shift = shift.replace(/^(?:R1 )?(.+?)(\*|-e|-c)?$/, '$1');        // pulm-e -> pulm
+        
+        // Determine shift type (e.g. 'Med 4 Day' -> 'day'). Shifts that don't match any entry in the map default to a day shift
+        let type = 'day';
+        for (let [t, pattern] of shiftTypes) {
+          if (shift.match(pattern)) {
+            type = t;
+            break;
+          }
+        }
+        
+        // Eeekends on elective which should be 'off', not 'elective'
+        const dayOfWeek = date.day();
+        if (type === 'elective' && (dayOfWeek === 0 || dayOfWeek === 6)) {
+          type = 'off'
+        }
+        
+        // Track what we're defaulting to 'day' shifts for debuggin, in case rotations are missed
+        if (type === 'day' && !KNOWN_DAY_SHIFTS.has(shift)) {
+          NEW_DAY_SHIFTS.add(shift);
+        }
+        
+        return [name, date, {r: ryear, s: shift, t: type}];
+      }
+      
+      // Combine shift data for the same person on the same day (e.g. a 24 listed as 'Med 3 Day' and 'Med 3 Night')
+      function combine(info, existing) {
+        if (!existing || (existing.t === info.t)) {
+          return info;
+        }
+        
+        if (existing.t.match(/day|night/) && !info.t.match(/vaca|off|jeo/)) {
+          existing.t += `,${info.t}`;
+          return existing;
+        }
+
+        return info;
+      }
+
+      // Accepts an object that maps {date -> {name -> {shift data}}}, and modifies it in place
+      // to tag shifts as pre and post-call.
+      function appendPostCall(data) {
+        // Figure out date range represented in data
+        let firstDate, lastDate;
+        for (let dateStr in data) {
+          const date = moment(dateStr);
+          firstDate = (!firstDate || date.isBefore(firstDate)) ? date : firstDate;
+          lastDate = (!lastDate || date.isAfter(lastDate)) ? date : lastDate;
+        }
+
+        // Iterate over data chronologically
+        for (let date=firstDate; date.isSameOrBefore(lastDate); date.add(1, 'day')) {
+          const today = date.format('YYYY-MM-DD'),
+                yest = date.subtract(1, 'day').format('YYYY-MM-DD'),
+                tmrw = date.add(1, 'day').format('YYYY-MM-DD');
+          for (let name in data[today]) {
+            const todayInfo = data[today][name],
+                  yestInfo = data[yest] && data[yest][name];
+
+            if (yestInfo) {
+              if (yestInfo.t.match(/night/) && todayInfo.t.match(/^(?:vaca|off|elective)$/)) {
+                // Today is postcall when: yesterday WAS a night shift, and today is either off, on elective, or vacation
+                todayInfo.s = todayInfo.s + ' Post';
+                todayInfo.t = 'postcall';
+              } else if (!yestInfo.t.match(/night/) && todayInfo.t.match(/night/) && !todayInfo.t.match(/day|resource/)) {
+                // Today is precall when: yesterday was NOT a night shift, today IS a night shift, and we are off during the day
+                todayInfo.s = todayInfo.s.replace(/Night|Noc/i, 'Pre');
+                todayInfo.t += ',precall';
+              }
+            }
+          }
+        }
+      }
+      
+      function labelWorkingShifts(data) {
+        // Delete all non-"free" shifts
+        for (let date in data) {
+          const dataForDate = data[date];
+          for (let name in dataForDate) {
+            // Not free if working a day shift or working a night shift, unless we are pre-call
+            if (dataForDate[name].t.match(/day|away/) || (dataForDate[name].t.match(/night/) && !dataForDate[name].t.match(/precall/))) {
+              if (dataForDate[name].t.match(/day/) && dataForDate[name].t.match(/night/)) {
+                dataForDate[name].s = dataForDate[name].s.replace(/ Day| Night/i, ' 24hr')
+              } else {
+                dataForDate[name].s = dataForDate[name].s.replace(/ Day| Night|, am|, pm/i, '')
+              }
+              dataForDate[name].t = 'work';
+            }
+          }
+        }
+      }
+      
+      // ----------------------------------------------------------------------
+      // UI functions
+      // ----------------------------------------------------------------------
+      function initUI() {
+        // Button click handlers
+        $('.filter').change(refreshFilters);
+        $('.months').change(() => {
+          refreshCalendar(DATA);
+          refreshFilters();
+        });
+        $('#show-matching').on('input', refreshFilters);
+        $('#amionkey').keypress((e) => !(e.keyCode==13) || doLogin());
+        $('#login').click(doLogin);
+        
+        // Month labs
+        const month = moment().date(1);
+        for (let i=0; i<12; i++) {
+          $('#month-' + i).next('label').text(month.format('MMM'));
+          month.add(1, 'month')
+        }
+        $('.months').show();
+      }
+
+      function doLogin(e) {
+        AMIONKEY = $('#amionkey').val().trim().toLowerCase();
+        const url = window.location.href.split('?')[0] + '?amion=' + AMIONKEY;
+        window.history && window.history.pushState && window.history.pushState("", "", url);
+        $('.login').hide();
+        $('.loading').show();
+        setTimeout(reload, 0);
+      }
+
+      function refreshCalendar(data) {
+        const $cal = $('#cal').empty(),
+              selMonth = $('.months input:checked').next('label').text();
+        
+        let day = moment().date(1).month(selMonth);
+        
+        // Wrap around to next year after December
+        if (day.month() < moment().month()) {
+          day.add(1, 'year');
+        }
+        
+        // The month we're displaying & the day of week for the first of the month
+        const month = day.month(),
+            dayOfWeek = day.day(),
+            daysInMonth = day.daysInMonth();
+
+        for (let i=0; i<daysInMonth+dayOfWeek; i+=7) {
+          
+          // Build one week of the calendar
+          let week = '';
+          for (let j=0; j<7; j++) {
+
+            // For the first of the month and after the end of the month, add blank boxes for the extra weekdays
+            if ((i === 0 && j < dayOfWeek) || (day.month() !== month)) {
+              week += '<div></div>';
+              continue;
+            }
+                    
+            const dayText = (day.date() === 1) ? day.format('MMM D') : day.format('D'),
+                  dataForDate = data[day.format('YYYY-MM-DD')],
+                  people = peopleToHtml(dataForDate);
+
+            week += `<div><span class="date">${dayText}</span><br>`;
+            week += people;
+            week += '</div>'
+
+            day.add(1, 'day');
+          }
+          $cal.append($(week));
+        }
+      }
+      
+      // Convert an object {name: {r: ryear, s: shift, t: type}, ...} 
+      // to an html blob of <span>John, R1 (Med 4)</span><br><span>...
+      function peopleToHtml(people) {
+        let ret = '';
+        if (people) {
+          const sortedNames = Object.keys(people).sort();
+          for (let name of sortedNames) {
+            const info = people[name],
+                  classes = info.t.replace(',', ' ');
+            ret += `<span class="${classes} ${info.r}">${name} <span class="shift">(${info.s})</span><br></span>`;
+          }
+        }
+        return ret;
+      }
+
+      function refreshFilters() {
+        const $all = $('.cal span');
+        
+        // Show everyone first
+        $all.css('display', '');
+        
+        // Then hide the filtered out ones
+        const r1 = $('#show-r1').is(':checked'), 
+              r2 = $('#show-r2').is(':checked'), 
+              r3 = $('#show-r3').is(':checked'), 
+              vaca = $('#show-vacation').is(':checked'), 
+              off = $('#show-off').is(':checked'), 
+              elective = $('#show-elective').is(':checked'), 
+              jeo = $('#show-jeopardy').is(':checked'), 
+              call = $('#show-call').is(':checked'), 
+              res = $('#show-resource').is(':checked'),
+              work = $('#show-working').is(':checked'),
+              patterns = $('#show-matching').val()
+                          .split(',')
+                          .map(v => v.trim())
+                          .filter(String) // remove blanks
+                          .map(v => new RegExp(v, 'i'));
+        const $hide = $all.filter((idx, el) => {
+          const $el = $(el),
+                text = $el.text(),
+                hideEl = !$el.hasClass('date') && !$el.hasClass('shift') &&
+                       (!r1 && $el.hasClass('R1') ||
+                        !r2 && $el.hasClass('R2') ||
+                        !r3 && $el.hasClass('R3') ||
+                        !vaca && $el.hasClass('vaca') ||
+                        !off && $el.hasClass('off') ||
+                        !elective && $el.hasClass('elective') ||
+                        !jeo && $el.hasClass('jeo') ||
+                        !call && ($el.hasClass('precall') || $el.hasClass('postcall')) ||
+                        !res && $el.hasClass('resource') ||
+                        !work && ($el.hasClass('work')) || 
+                        (patterns.length > 0) && patterns.every((p) => (p && !text.match(p))));
+          return hideEl;
+        });
+        $hide.css('display', 'none');
+      }
+      
+      // ----------------------------------------------------------------------
+      // Utility functions
+      // ----------------------------------------------------------------------
+      function saveData(data) {
+        if (data === undefined) {
+          console.log('To refresh data, save the following URL to "year.csv", then run fetchCsv(saveData) (and wait...)');
+          console.log(""+`https://www.amion.com/cgi-bin/ocs?Lo=${escape(AMIONKEY)}&Rpt=625c&Month=${moment().month()+1}&Days=365`);
+          return;
+        } else if (typeof data !== "object") {
+          console.log('Invalid data.');
+        }
+        
+        data = CryptoJS.AES.encrypt(JSON.stringify(data), AMIONKEY);
+
+        const blob = new Blob([data], {type: 'binary'}),
+            e = document.createEvent('MouseEvents'),
+            a = document.createElement('a');
+
+        a.download = 'data-encrypted.txt';
+        a.href = window.URL.createObjectURL(blob);
+        a.dataset.downloadurl =  ['binary', a.download, a.href].join(':');
+        e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        a.dispatchEvent(e);
+      }
+      
+      // ----------------------------------------------------------------------
+      // Initizialization
+      // ----------------------------------------------------------------------
+      function reload() {
+        const load = function(data) {
+          DATA = data;
+          refreshCalendar(data);
+          refreshFilters();
+          $('#loading').hide();
+        };
+
+        fetchJson(load);
+
+        // Comment out fetchJson and uncomment this line to directly use year.csv rather than data-encrypted.txt
+        //fetchCsv(load);
+        
+        saveData();
+      };
+      
+      function showLogin() {
+        $('.loading').hide();
+        $('.login').show();
+      }
+      
+      function fetchCsv(cb) {
+        $.ajax({
+          mimeType: 'text/csv',
+          url: 'year.csv',
+          type: 'GET',
+          dataType: 'text'
+        }).done(csv => cb(parseSrcData(csv)));
+      }
+
+      function fetchJson(cb) {
+        if (!AMIONKEY) {
+          return showLogin();
+        }
+
+        $.ajax({
+          mimeType: 'text/plain',
+          url: 'data-encrypted.txt',
+          type: 'GET',
+          dataType: 'text'
+        }).done(data => {
+          try {
+            const bin = CryptoJS.AES.decrypt(data, AMIONKEY),
+                  s = CryptoJS.enc.Utf8.stringify(bin),
+                  obj = JSON.parse(s);
+            cb(obj);
+          } catch (e) {
+            showLogin();
+          }
+        }).fail((e) => {
+          $('.loading').text('Error loading data: ' + e)
+        });
+      }
+
+      initUI(); // Pre-render initizialization
+      $(reload);
+    </script>
+  </body>
+</html>
