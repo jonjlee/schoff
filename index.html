@@ -126,6 +126,9 @@
         text-align: right;
         width: 100%;
       }
+      .cal .hilite {
+        background: #f5d8a5;
+      }
       
       /* Colors for each type of shift */
       .cal .shift {
@@ -457,7 +460,8 @@
         }
         
         // The month we're displaying & the day of week for the first of the month
-        const month = day.month(),
+        const today = moment(),
+            month = day.month(),
             dayOfWeek = day.day(),
             daysInMonth = day.daysInMonth();
 
@@ -475,9 +479,10 @@
                     
             const dayText = (day.date() === 1) ? day.format('MMM D') : day.format('D'),
                   dataForDate = data[day.format('YYYY-MM-DD')],
+                  dateClass = today.isSame(day, 'd') ? "date hilite" : "date",
                   people = peopleToHtml(dataForDate);
 
-            week += `<div><span class="date">${dayText}</span><br>`;
+            week += `<div><span class="${dateClass}">${dayText}</span><br>`;
             week += people;
             week += '</div>'
 
