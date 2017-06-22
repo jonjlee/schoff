@@ -251,7 +251,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.8.3/jquery.csv.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
     <script type="text/babel">
-      var KNOWN_DAY_SHIFTS = new Set(["ED Mid 12P-12A", "ED Mid 12P-10P", "ED Mid 5P-2A Team West", 'HMC ED+Wards 7A-6P', "HEM SR Orange 1", "HEM SR Orange 2", "HEM SR Blue 1", 'IICU Day', 'Med 1 Day', 'Med 1 Night', 'Med 2 Day', 'Med 2 Night', 'Med 3 Day', 'Med 3 Night', 'Med 4 Day', 'Med 4 Night', 'Med 5 Day', 'Med 5 Night', 'Med 6 Day', 'Med 6 Night', 'Med 7 Day', 'Med 7 Night', 'NICU Day', 'NICU R1 Day', 'PICU Green Day', 'PICU Yellow Day', "Shift A: 7 AM - 6 PM", "Shfit B: 7 AM - 6 PM", "Shift C: 9 AM - 7 PM", "Shift D: 12 PM - 10 PM", "Shift E: 1 PM - 11 PM"]);
+      var KNOWN_DAY_SHIFTS = new Set(["ED Mid 12P-12A", "ED Mid 12P-10P", "ED Mid 5P-2A Team West", 'HMC ED+Wards 7A-6P', "HEM SR Orange 1", "HEM SR Orange 2", "HEM SR Blue 1", 'IICU Day', 'Med 1 Day', 'Med 1 Night', 'Med 2 Day', 'Med 2 Night', 'Med 3 Day', 'Med 3 Night', 'Med 4 Day', 'Med 4 Night', 'Med 5 Day', 'Med 5 Night', 'Med 6 Day', 'Med 6 Night', 'Med 7 Day', 'Med 7 Night', 'NB', 'NICU Day', 'NICU R1 Day', 'PICU Green Day', 'PICU Yellow Day', "Shift A: 7 AM - 6 PM", "Shfit B: 7 AM - 6 PM", "Shift C: 9 AM - 7 PM", "Shift D: 12 PM - 10 PM", "Shift E: 1 PM - 11 PM"]);
       var NEW_DAY_SHIFTS = new Set();
       var DATA = null;
       var AMIONKEY = new RegExp("amion=([^&]*)", "i").exec(window.location.search);
@@ -304,7 +304,7 @@
                 ['night', /Night$/],
                 ['night', /6P-7A|7P-7A|- 3 AM|- 4 AM|- 7 AM/],
                 ['off', /^(?:R1 )?Med [1-7]$/],                         // shifts listed as rotation name only are off. Working shifts are named.
-                ['off', /(:?cicu|ED|HEM R1|HEM SR|HMC|Med 7 Teaching Off|NB|NB\+|Newborn Senior|NICU|NICU R1|PICU|Resource Off|IICU)$/i],  // -
+                ['off', /(:?cicu|ED|HEM R1|HEM SR|HMC|Med 7 Teaching Off|NB\+|Newborn Senior|NICU|NICU R1|PICU|Resource Off|IICU)$/i],  // -
                 ['resource', /Resource$/],
                 ['vaca', /Vacation|VAC/]];
 
@@ -314,11 +314,12 @@
         }
         
         // Reformat field text
-        let [name, , , shift, , , date, start, end, ryear] = ln;
+        let [name, , , shift, , , date, start, end, ryear, , , , , , , oncall] = ln;
         date = moment(date, 'M-D-YY');
         name = name.replace(/(.)(?:.*?), ?(.*)/, '$2 $1') + `, ${ryear}`; // Doe, John -> John D
         shift = shift || ln[14];                                          // For shifts missing names, use secondary designation
         shift = shift.replace(/^(?:R1 )?(.+?)(\*|-e|-c)?$/, '$1');        // pulm-e -> pulm
+        oncall = (oncall === 'On Call');
         
         // Determine shift type (e.g. 'Med 4 Day' -> 'day'). Shifts that don't match any entry in the map default to a day shift
         let type = 'day';
@@ -329,9 +330,9 @@
           }
         }
         
-        // Eeekends on elective which should be 'off', not 'elective'
+        // Weekends on elective & newborn which should be 'off', not 'elective'
         const dayOfWeek = date.day();
-        if (type === 'elective' && (dayOfWeek === 0 || dayOfWeek === 6)) {
+        if ((type === 'elective' || (shift === 'NB' && !oncall)) && (dayOfWeek === 0 || dayOfWeek === 6)) {
           type = 'off'
         }
         
