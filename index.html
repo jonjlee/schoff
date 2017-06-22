@@ -417,7 +417,7 @@
           refreshCalendar(DATA);
           refreshFilters();
         });
-        $('#show-matching').on('input', refreshFilters);
+        $('#show-matching').on('input', handleMatchingInput);
         $('#amionkey').keypress((e) => !(e.keyCode==13) || doLogin());
         $('#login').click(doLogin);
         
@@ -428,6 +428,12 @@
           month.add(1, 'month')
         }
         $('.months').show();
+      }
+      
+      var matchingTimeout = null;
+      function handleMatchingInput() {
+        clearTimeout(matchingTimeout);
+        matchingTimeout = setTimeout(refreshFilters, 600);
       }
 
       function doLogin(e) {
