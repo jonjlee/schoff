@@ -314,12 +314,13 @@
         }
         
         // Reformat field text
-        let [name, , , shift, , , date, start, end, ryear, , , , , , , oncall] = ln;
+        let [name, , , shift, , , date, start, end, ryear, , , , , , isShift, oncall] = ln;
         date = moment(date, 'M-D-YY');
         name = name.replace(/(.)(?:.*?), ?(.*)/, '$2 $1') + `, ${ryear}`; // Doe, John -> John D
         shift = shift || ln[14];                                          // For shifts missing names, use secondary designation
-        shift = shift.replace(/^(?:R1 )?(.+?)(\*|-e|-c)?$/, '$1');        // pulm-e -> pulm
+        shift = shift.replace(/^(?:R1 )?(.+?)(\*|-e|-c|-h)?$/, '$1');        // pulm-e -> pulm
         oncall = (oncall === 'On Call');
+        isShift = (isShift === 'o');                                      // usually "r" for a line designating a rotation and "o" if on call, though not consistent
         
         // Determine shift type (e.g. 'Med 4 Day' -> 'day'). Shifts that don't match any entry in the map default to a day shift
         let type = 'day';
@@ -330,13 +331,20 @@
           }
         }
         
-        // Weekends on elective & newborn which should be 'off', not 'elective'
-        const dayOfWeek = date.day();
-        if ((type === 'elective' || (shift === 'NB' && !oncall)) && (dayOfWeek === 0 || dayOfWeek === 6)) {
+        // Special rules
+        // --------------------------------------------------------
+        // Weekends on elective should be 'off', not 'elective'
+        const dayOfWeek = date.day(),
+              isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        if (type === 'elective' && isWeekend) {
           type = 'off'
         }
+        // NB weekends should be off, unless specifically on call. isShift designation is not correctly set.
+        if ((shift === 'NB' && !oncall) && isWeekend) {
+          type = 'off';
+        }
         
-        // Track what we're defaulting to 'day' shifts for debuggin, in case rotations are missed
+        // Track what we're defaulting to 'day' shifts for debugging, in case rotations are missed
         if (type === 'day' && !KNOWN_DAY_SHIFTS.has(shift)) {
           NEW_DAY_SHIFTS.add(shift);
         }
@@ -434,6 +442,11 @@
         $('.months').show();
       }
       
+      function showLogin() {
+        $('.loading').hide();
+        $('.login').show();
+      }
+
       var matchingTimeout = null;
       function handleMatchingInput() {
         clearTimeout(matchingTimeout);
@@ -554,12 +567,9 @@
       // Utility functions
       // ----------------------------------------------------------------------
       function saveData(data) {
-        if (data === undefined) {
-          console.log('To refresh data, save the following URL to "year.csv", then run fetchCsv(saveData) (and wait...)');
-          console.log(""+`https://www.amion.com/cgi-bin/ocs?Lo=${escape(AMIONKEY)}&Rpt=625c&Month=${moment().month()+1}&Days=365`);
-          return;
-        } else if (typeof data !== "object") {
+        if (typeof data !== "object") {
           console.log('Invalid data.');
+          return;
         }
         
         data = CryptoJS.AES.encrypt(JSON.stringify(data), AMIONKEY);
@@ -579,26 +589,28 @@
       // Initizialization
       // ----------------------------------------------------------------------
       function reload() {
-        const load = function(data) {
-          DATA = data;
-          refreshCalendar(data);
-          refreshFilters();
-          $('#loading').hide();
-        };
+        // Read data from data-encrypted.txt
+        fetchJson(loadData);
 
-        fetchJson(load);
-
-        // Comment out fetchJson and uncomment this line to directly use year.csv rather than data-encrypted.txt
-        //fetchCsv(load);
-        
-        saveData();
-      };
-      
-      function showLogin() {
-        $('.loading').hide();
-        $('.login').show();
+        console.log('To refresh data, save the following URL to "year.csv", then run fetchCsv(saveData) (and wait...)');
+        console.log('')
+        console.log(""+`https://www.amion.com/cgi-bin/ocs?Lo=${escape(AMIONKEY)}&Rpt=625c&Month=${moment().month()+1}&Days=365`);
+        console.log('')
+        console.log('To refresh the UI from year.csv, run reloadFromCsv()');
       }
       
+      function reloadFromCsv() {
+        // Directly use year.csv rather than data-encrypted.txt
+        fetchCsv(loadData);
+      }
+      
+      function loadData(data) {
+        DATA = data;
+        refreshCalendar(data);
+        refreshFilters();
+        $('#loading').hide();
+      };
+
       function fetchCsv(cb) {
         $.ajax({
           mimeType: 'text/csv',
