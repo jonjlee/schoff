@@ -221,18 +221,18 @@
     <main class="main">
       <section class="flex">
         <div class="tabs twelve months" style="display:none">
-          <input id="month-0" type="radio", name="month-tabgroup" checked /><label class="pseudo button toggle" for="month-0"></label>
-          <input id="month-1" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-1"></label>
-          <input id="month-2" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-2"></label>
-          <input id="month-3" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-3"></label>
-          <input id="month-4" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-4"></label>
-          <input id="month-5" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-5"></label>
-          <input id="month-6" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-6"></label>
-          <input id="month-7" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-7"></label>
-          <input id="month-8" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-8"></label>
-          <input id="month-9" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-9"></label>
-          <input id="month-10" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-10"></label>
-          <input id="month-11" type="radio", name="month-tabgroup" /><label class="pseudo button toggle" for="month-11"></label>
+          <input id="month-0" type="radio" name="month-tabgroup" checked /><label class="pseudo button toggle" for="month-0"></label>
+          <input id="month-1" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-1"></label>
+          <input id="month-2" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-2"></label>
+          <input id="month-3" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-3"></label>
+          <input id="month-4" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-4"></label>
+          <input id="month-5" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-5"></label>
+          <input id="month-6" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-6"></label>
+          <input id="month-7" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-7"></label>
+          <input id="month-8" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-8"></label>
+          <input id="month-9" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-9"></label>
+          <input id="month-10" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-10"></label>
+          <input id="month-11" type="radio" name="month-tabgroup" /><label class="pseudo button toggle" for="month-11"></label>
         </div>
       </section>
       <section class="flex seven cal header">
@@ -318,7 +318,8 @@
         date = moment(date, 'M-D-YY');
         name = name.replace(/(.)(?:.*?), ?(.*)/, '$2 $1') + `, ${ryear}`; // Doe, John -> John D
         shift = shift || ln[14];                                          // For shifts missing names, use secondary designation
-        shift = shift.replace(/^(?:R1 )?(.+?)(\*|-e|-c|-h)?$/, '$1');        // pulm-e -> pulm
+        shift = shift.replace(/^(?:R1 )?(.+?)(\*|-e|-c|-h)?$/, '$1');     // pulm-e -> pulm
+        shift = shift.replace(/Shift .:/, 'ED:');                         // Shift A: 7AM - 7PM   ->   ED: 7AM - 7PM
         oncall = (oncall === 'On Call');
         isShift = (isShift === 'o');                                      // usually "r" for a line designating a rotation and "o" if on call, though not consistent
         
@@ -393,7 +394,7 @@
                 todayInfo.t = 'postcall';
               } else if (!yestInfo.t.match(/night/) && todayInfo.t.match(/night/) && !todayInfo.t.match(/day|resource/)) {
                 // Today is precall when: yesterday was NOT a night shift, today IS a night shift, and we are off during the day
-                todayInfo.s = todayInfo.s.replace(/Night|Noc/i, 'Pre');
+                todayInfo.s = todayInfo.s.replace(/Night|Noc/i, 'Pre').replace(/(ED:.*)$/, '$1 Pre');
                 todayInfo.t += ',precall';
               }
             }
