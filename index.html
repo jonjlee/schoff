@@ -156,6 +156,11 @@
       .work {
         color: #aaaaaa;
       }
+      
+      /* Upload file control */
+      .upload {
+        text-align: center;
+      }
     </style>
   </head>
   <body>
@@ -242,9 +247,13 @@
         <div class="full loading"><div class="spinner"></div></div>
         <div class="full login" style="display:none">Amion Login: <input id="amionkey" type="text"/> <button id="login">Go</button></div>
       </section>
+      <section class="flex one" id="useUpload" style="display:none">
+        <div class="upload">Upload calendar: <input id="uploadFile" type="file" /></div>
+      </section>
       <section class="flex"></section>
     </main>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.23.0/polyfill.min.js"></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
@@ -585,7 +594,7 @@
         e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
         a.dispatchEvent(e);
       }
-      
+
       // ----------------------------------------------------------------------
       // Initizialization
       // ----------------------------------------------------------------------
@@ -593,11 +602,32 @@
         // Read data from data-encrypted.txt
         fetchJson(loadData);
 
-        console.log('To refresh data, save the following URL to "year.csv", then run fetchCsv(saveData) (and wait...)');
+        console.log('To refresh data, save the following URL, then run reloadFromUpload(saveData) and upload it (then wait...)');
         console.log('')
         console.log(""+`https://www.amion.com/cgi-bin/ocs?Lo=${escape(AMIONKEY)}&Rpt=625c&Month=${moment().month()+1}&Days=365`);
         console.log('')
-        console.log('To refresh the UI from year.csv, run reloadFromCsv()');
+        console.log('To refresh the UI by uploading a CSV file, run reloadFromUpload().');
+      }
+
+      function reloadFromUpload(cb) {
+        // Default to loading data to UI. Can also specify saveData as a callback to trigger downloading data-encrypted.txt
+        cb = cb || loadData;
+      
+        const $uploadFile = $('#uploadFile');
+        $('#useUpload').show();
+        $uploadFile.change(() => {
+          if (!window.FileReader) {
+            console.log('FileReader not supported');
+            return;
+          }
+          const fr = new FileReader();
+          fr.onload = function() {
+            cb(parseSrcData(fr.result));
+            $('#useUpload').hide();
+          };
+          fr.readAsText($uploadFile[0].files[0]);
+        });
+        $uploadFile.click();
       }
       
       function reloadFromCsv() {
@@ -641,7 +671,7 @@
             showLogin();
           }
         }).fail((e) => {
-          $('.loading').text('Error loading data: ' + e)
+          $('.loading').text('Error loading data: ' + (e.statusText || e))
         });
       }
 
