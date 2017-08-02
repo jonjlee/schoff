@@ -651,28 +651,43 @@
         }).done(csv => cb(parseSrcData(csv)));
       }
 
+      var cachedEncryptedData = null;
       function fetchJson(cb) {
         if (!AMIONKEY) {
           return showLogin();
         }
 
-        $.ajax({
-          mimeType: 'text/plain',
-          url: 'data-encrypted.txt',
-          type: 'GET',
-          dataType: 'text'
-        }).done(data => {
+        var process = function(data) {
+          // Try to decrypt data file with amion key.
           try {
             const bin = CryptoJS.AES.decrypt(data, AMIONKEY),
                   s = CryptoJS.enc.Utf8.stringify(bin),
                   obj = JSON.parse(s);
             cb(obj);
           } catch (e) {
+            // On decrypt fail, assume key is wrong and redisplay login.
             showLogin();
           }
-        }).fail((e) => {
-          $('.loading').text('Error loading data: ' + (e.statusText || e))
-        });
+        };
+        
+        // Use cached data rather than re-download 2MB file
+        if (cachedEncryptedData) {
+          process(cachedEncryptedData);
+        } else {
+          // Fetch data file from dropbox
+          const url = 'https://dl.dropbox.com/s/ay81mj7fnbubj2t/data-encrypted.txt';
+          $.ajax({
+            mimeType: 'text/plain',
+            url: url,
+            type: 'GET',
+            dataType: 'text'
+          }).done(data => {
+            cachedEncryptedData = data;
+            process(data);
+          }).fail((e) => {
+            $('.loading').text('Error loading data: ' + (e.statusText || e))
+          });
+        }
       }
 
       initUI(); // Pre-render initizialization
