@@ -263,6 +263,7 @@
       var KNOWN_DAY_SHIFTS = new Set(["ED Mid 12P-12A", "ED Mid 12P-10P", "ED Mid 5P-2A Team West", 'HMC ED+Wards 7A-6P', "HEM SR Orange 1", "HEM SR Orange 2", "HEM SR Blue 1", 'IICU Day', 'Med 1 Day', 'Med 1 Night', 'Med 2 Day', 'Med 2 Night', 'Med 3 Day', 'Med 3 Night', 'Med 4 Day', 'Med 4 Night', 'Med 5 Day', 'Med 5 Night', 'Med 6 Day', 'Med 6 Night', 'Med 7 Day', 'Med 7 Night', 'NB', 'NICU Day', 'NICU R1 Day', 'PICU Green Day', 'PICU Yellow Day', "Shift A: 7 AM - 6 PM", "Shfit B: 7 AM - 6 PM", "Shift C: 9 AM - 7 PM", "Shift D: 12 PM - 10 PM", "Shift E: 1 PM - 11 PM"]);
       var NEW_DAY_SHIFTS = new Set();
       var DATA = null;
+      var DATAURL = 'https://dl.dropboxusercontent.com/s/kg9yv043p4hniuy/data-encrypted.txt';
       var AMIONKEY = new RegExp("amion=([^&]*)", "i").exec(window.location.search);
       AMIONKEY = AMIONKEY && unescape(AMIONKEY[1]).trim().toLowerCase() || "";
       
@@ -675,10 +676,9 @@
           process(cachedEncryptedData);
         } else {
           // Fetch data file from dropbox
-          const url = 'https://dl.dropboxusercontent.com/s/ay81mj7fnbubj2t/data-encrypted.txt';
           $.ajax({
             mimeType: 'text/plain',
-            url: url,
+            url: DATAURL,
             type: 'GET',
             dataType: 'text'
           }).done(data => {
