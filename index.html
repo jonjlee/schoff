@@ -82,6 +82,11 @@
       }
       
       /* Labels for checkboxes */
+      button.tiny {
+        margin: 0px 7px;
+        padding: 1px 7px;
+        font-size: 0.75em;
+      }
       .section-label {
         text-align: right;
         vertical-align: middle;
@@ -192,6 +197,9 @@
         </div>
         <div>
           <span>On: </span>
+
+          <button id="toggle-all" class="tiny">All</button>
+
           <label>
             <input id="show-vacation" class="filter" type="checkbox" checked>
             <span class="checkable checked vaca">Vacation</span>
@@ -441,6 +449,7 @@
           refreshFilters();
         });
         $('#show-matching').on('input', handleMatchingInput);
+        $('#toggle-all').click(handleToggleAll);
         $('#amionkey').keypress((e) => !(e.keyCode==13) || doLogin());
         $('#login').click(doLogin);
         
@@ -456,6 +465,18 @@
       function showLogin() {
         $('.loading').hide();
         $('.login').show();
+      }
+
+      function handleToggleAll() {
+        const checked = $('#show-vacation').is(':checked') &&
+                        $('#show-off').is(':checked') &&
+                        $('#show-elective').is(':checked') &&
+                        $('#show-jeopardy').is(':checked') &&
+                        $('#show-call').is(':checked') &&
+                        $('#show-resource').is(':checked') &&
+                        $('#show-working').is(':checked');
+        $('#show-vacation,#show-off,#show-elective,#show-jeopardy,#show-call,#show-resource,#show-working').prop('checked', !checked);
+        refreshFilters();
       }
 
       var matchingTimeout = null;
