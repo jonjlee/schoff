@@ -55,7 +55,7 @@
       
       /* nav bar */
       nav {
-        padding: 2em 0;
+        padding: 2.25em 0;
       }
       nav .menu {
         font-size: 11pt; 
@@ -190,8 +190,15 @@
             <input id="show-r3" class="filter" type="checkbox" checked>
             <span class="checkable">R3, </span>
           </label>
+        </div>
+        <div>
+          <span>Filter: </span>
           <label>
-            <span class="checkable">matching: </span>
+            <input id="show-drinks" class="filter" type="checkbox">
+            <span class="checkable">Free for Drinks, </span>
+          </label>
+          <label>
+            <span class="checkable">Matching: </span>
             <input id="show-matching" class="filter" type="text" size="30" placeholder="FIRST names, separate by commas">
           </label>
         </div>
@@ -546,7 +553,7 @@
           const sortedNames = Object.keys(people).sort();
           for (let name of sortedNames) {
             const info = people[name],
-                  classes = info.t.replace(',', ' ');
+                  classes = info.t.replace(/,/g, ' ');
             ret += `<span class="${classes} ${info.r}">${name} <span class="shift">(${info.s})</span><br></span>`;
           }
         }
@@ -570,6 +577,8 @@
               call = $('#show-call').is(':checked'), 
               res = $('#show-resource').is(':checked'),
               work = $('#show-working').is(':checked'),
+              drinks = $('#show-drinks').is(':checked'),
+              noDrinkShifts = /\(W |R\.A\.F\.|10P|12A/,
               patterns = $('#show-matching').val()
                           .split(',')
                           .map(v => v.trim())
@@ -589,6 +598,7 @@
                         !call && ($el.hasClass('precall') || $el.hasClass('postcall')) ||
                         !res && $el.hasClass('resource') ||
                         !work && ($el.hasClass('work')) || 
+                        drinks && (text.match(noDrinkShifts) || $el.hasClass('night')) ||
                         (patterns.length > 0) && patterns.every((p) => (p && !text.match(p))));
           return hideEl;
         });
