@@ -188,7 +188,7 @@
           </label>
           <label>
             <input id="show-r3" class="filter" type="checkbox" checked>
-            <span class="checkable">R3, </span>
+            <span class="checkable">R3</span>
           </label>
         </div>
         <div>
@@ -320,7 +320,7 @@
       // Convert a single line from csv file to a name, data, and shift
       function transformFields(ln) {
         const namesToIgnore = /--|Baker, Barb|MCC Attending|MCC Nurse Practitioner|Hem-Onc Hospitalist|HEM SR|EM3 PICU|Madigan PICU|Nurse Practitioner/,
-              rYearsToIgnore = /Chief|Heme-Onc Hospitalist|Visitor|Madigan Pediatrics|Other|WV/,
+              rYearsToIgnore = /Chief|Heme-Onc Hospitalist|Visitor|Madigan Pediatrics|Other|WV|EM/,
               shiftTypes = [
                 ['away', /^(?:W |Alaska|Away|REACH-Kisii)/],
                 ['elective', /^(?:ACR|Adol|allergy|bioethics|cards|cardiology|child.abuse|child.psych|clinics|cranio(?:facial)?|Dev|derm(?:atology)?|endo|genetics|gi|heme|id|innovation.*|MCC|neph|neuro|ophth(?:almology)?|PATHWAY|palliative(?:.care)?|pulm|radio(:?logy)?|rheum|reading|research|Res Path|sleep med|sports-ortho|wild-sports)$/i],
